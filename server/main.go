@@ -3,10 +3,8 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"go.elastic.co/apm/module/apmhttp/v2"
 	"go.elastic.co/apm/v2"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -17,6 +15,7 @@ const (
 	apmName = "test-apm-1"
 )
 
+
 func main() {
 	os.Setenv("ELASTIC_APM_SERVICE_NAME", apmName)
 	os.Setenv("ELASTIC_APM_SERVER_URL", apmServer)
@@ -26,14 +25,17 @@ func main() {
 }
 
 func baseHandler(w http.ResponseWriter, r *http.Request) {
-	span, ctx := apm.StartSpan(r.Context(), "baseHandler", "custom")
+	ctx := r.Context()
+	span, ctx := apm.StartSpan(ctx, "baseHandler", "custom")
 	defer span.End()
 	processingRequest(ctx)
 	todo, err := getTodoFromAPI(ctx)
 	if err != nil {
-		log.Println(err)
+		w.Write([]byte(err.Error()))
+		return
 	}
-	fmt.Println(todo)
+	data, _ := json.Marshal(todo)
+	w.Write(data)
 }
 
 func processingRequest(ctx context.Context) {
